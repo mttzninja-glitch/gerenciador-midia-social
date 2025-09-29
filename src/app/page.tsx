@@ -261,6 +261,7 @@ export default function SocialNinja() {
   const [showProfile, setShowProfile] = useState(false)
   const [showFinancial, setShowFinancial] = useState(false)
   const [showTeamManagement, setShowTeamManagement] = useState(false)
+  const [showNewClientModal, setShowNewClientModal] = useState(false)
   const [profileData, setProfileData] = useState({
     name: "João Silva",
     email: "joao@socialninja.com",
@@ -442,6 +443,197 @@ export default function SocialNinja() {
     setEditingPost(null)
   }
 
+  // Função para adicionar novo cliente
+  const addNewClient = (clientData) => {
+    const newClient = {
+      id: Date.now(),
+      name: clientData.name,
+      logo: clientData.logo || "🏢",
+      summary: clientData.summary,
+      status: "Novo",
+      progress: 0,
+      statusColor: "text-blue-600",
+      statusBg: "bg-blue-50",
+      metrics: { followers: "0", engagement: "0%", reach: "0" },
+      info: {
+        email: clientData.email,
+        phone: clientData.phone,
+        address: clientData.address,
+        instagram: clientData.instagram,
+        facebook: clientData.facebook,
+        passwords: {
+          instagram: "",
+          facebook: "",
+          email: ""
+        },
+        notes: clientData.notes || ""
+      }
+    }
+    setEditableData(prev => [...prev, newClient])
+    setShowNewClientModal(false)
+  }
+
+  // Modal de cadastro de novo cliente
+  const NewClientModal = () => {
+    const [formData, setFormData] = useState({
+      name: '',
+      logo: '',
+      summary: '',
+      email: '',
+      phone: '',
+      address: '',
+      instagram: '',
+      facebook: '',
+      notes: ''
+    })
+
+    const handleSubmit = (e) => {
+      e.preventDefault()
+      if (formData.name && formData.email) {
+        addNewClient(formData)
+      }
+    }
+
+    if (!showNewClientModal) return null
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">Cadastrar Novo Cliente</h3>
+            <button 
+              onClick={() => setShowNewClientModal(false)}
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nome da Empresa *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                  placeholder="Ex: Café Aroma"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Emoji/Logo</label>
+                <input
+                  type="text"
+                  value={formData.logo}
+                  onChange={(e) => setFormData({...formData, logo: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                  placeholder="☕ 👗 💻"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Descrição do Negócio</label>
+                <textarea
+                  value={formData.summary}
+                  onChange={(e) => setFormData({...formData, summary: e.target.value})}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all resize-none"
+                  placeholder="Descreva brevemente o negócio do cliente..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                  placeholder="contato@empresa.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Endereço</label>
+                <input
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                  placeholder="Rua, número - Cidade"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
+                <input
+                  type="text"
+                  value={formData.instagram}
+                  onChange={(e) => setFormData({...formData, instagram: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                  placeholder="@usuario"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
+                <input
+                  type="text"
+                  value={formData.facebook}
+                  onChange={(e) => setFormData({...formData, facebook: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                  placeholder="Nome da Página"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all resize-none"
+                  placeholder="Informações importantes sobre o cliente, preferências, horários, etc..."
+                />
+              </div>
+            </div>
+
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                className="flex-1 bg-black text-white py-4 rounded-2xl font-semibold hover:bg-gray-800 transition-colors"
+              >
+                Cadastrar Cliente
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNewClientModal(false)}
+                className="flex-1 border border-gray-200 text-gray-600 py-4 rounded-2xl font-semibold hover:border-gray-400 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   // Modal de edição de card
   const EditCardModal = () => {
     if (!showEditModal || !editingPost) return null
@@ -485,7 +677,7 @@ export default function SocialNinja() {
                   onChange={(e) => setFormData({...formData, client: e.target.value})}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
                 >
-                  {mockClients.map(client => (
+                  {editableData.map(client => (
                     <option key={client.id} value={client.name}>{client.name}</option>
                   ))}
                 </select>
@@ -1190,7 +1382,7 @@ export default function SocialNinja() {
               <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    {mockClients.find(c => c.name === client.name)?.logo || '🏢'}
+                    {editableData.find(c => c.name === client.name)?.logo || '🏢'}
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900">{client.name}</h4>
@@ -2247,7 +2439,7 @@ export default function SocialNinja() {
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Selecionar Cliente</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {mockClients.map(client => (
+          {editableData.map(client => (
             <button
               key={client.id}
               onClick={() => setSelectedClient(client)}
@@ -2515,7 +2707,7 @@ export default function SocialNinja() {
                   </div>
                   <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">+2 este mês</span>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{mockClients.length}</div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">{editableData.length}</div>
                 <div className="text-sm text-gray-500">Clientes Ativos</div>
               </div>
 
@@ -2561,9 +2753,18 @@ export default function SocialNinja() {
 
             {/* Seção de Clientes */}
             <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Seus Clientes</h2>
-                <p className="text-gray-500">Gerencie todos os seus clientes em um só lugar</p>
+              <div className="flex items-center justify-between">
+                <div className="text-center flex-1">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Seus Clientes</h2>
+                  <p className="text-gray-500">Gerencie todos os seus clientes em um só lugar</p>
+                </div>
+                <button 
+                  onClick={() => setShowNewClientModal(true)}
+                  className="bg-black text-white px-6 py-3 rounded-2xl font-medium hover:bg-gray-800 transition-colors flex items-center space-x-2"
+                >
+                  <UserPlus className="w-5 h-5" />
+                  <span>Novo Cliente</span>
+                </button>
               </div>
 
               {/* Client Cards */}
@@ -2896,7 +3097,7 @@ export default function SocialNinja() {
 
             {/* Slides de Relatório */}
             <div className="space-y-8">
-              {mockClients.map(client => (
+              {editableData.map(client => (
                 <ReportSlide key={client.id} client={client} />
               ))}
             </div>
@@ -3156,6 +3357,9 @@ export default function SocialNinja() {
           </div>
         </div>
       )}
+
+      {/* Modal de Novo Cliente */}
+      <NewClientModal />
     </div>
   )
 }
