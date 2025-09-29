@@ -262,6 +262,7 @@ export default function SocialNinja() {
   const [showFinancial, setShowFinancial] = useState(false)
   const [showTeamManagement, setShowTeamManagement] = useState(false)
   const [showNewClientModal, setShowNewClientModal] = useState(false)
+  const [showNewTaskModal, setShowNewTaskModal] = useState(false)
   const [profileData, setProfileData] = useState({
     name: "João Silva",
     email: "joao@socialninja.com",
@@ -352,6 +353,14 @@ export default function SocialNinja() {
     }
   ])
 
+  // Estados para tarefas
+  const [tasks, setTasks] = useState([
+    { id: 1, task: "Postar story Café Aroma", time: "09:00", done: true, deadline: "2024-12-15" },
+    { id: 2, task: "Responder comentários Boutique", time: "10:30", done: false, deadline: "2024-12-16" },
+    { id: 3, task: "Criar post Tech Solutions", time: "14:00", done: false, deadline: "2024-12-14" },
+    { id: 4, task: "Reunião cliente novo", time: "16:00", done: false, deadline: "2024-12-17" }
+  ])
+
   // Estados para edição de cards
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingPost, setEditingPost] = useState(null)
@@ -367,6 +376,12 @@ export default function SocialNinja() {
     }
     setCurrentDate(now.toLocaleDateString('pt-BR', options))
   }, [])
+
+  // Função para verificar tarefas atrasadas
+  const getOverdueTasks = () => {
+    const today = new Date().toISOString().split('T')[0]
+    return tasks.filter(task => !task.done && task.deadline < today)
+  }
 
   // Funções para drag and drop
   const handleDragStart = (e, post) => {
@@ -471,6 +486,121 @@ export default function SocialNinja() {
     }
     setEditableData(prev => [...prev, newClient])
     setShowNewClientModal(false)
+  }
+
+  // Função para adicionar nova tarefa
+  const addNewTask = (taskData) => {
+    const newTask = {
+      id: Date.now(),
+      task: taskData.task,
+      time: taskData.time,
+      done: false,
+      deadline: taskData.deadline
+    }
+    setTasks(prev => [...prev, newTask])
+    setShowNewTaskModal(false)
+  }
+
+  // Função para arquivar cliente
+  const archiveClient = (clientId) => {
+    setEditableData(prev => prev.map(client => 
+      client.id === clientId 
+        ? { ...client, status: "Arquivado", statusColor: "text-gray-600", statusBg: "bg-gray-50" }
+        : client
+    ))
+  }
+
+  // Função para deletar cliente
+  const deleteClient = (clientId) => {
+    if (confirm("Tem certeza que deseja deletar este cliente? Esta ação não pode ser desfeita.")) {
+      setEditableData(prev => prev.filter(client => client.id !== clientId))
+    }
+  }
+
+  // Modal de cadastro de nova tarefa
+  const NewTaskModal = () => {
+    const [formData, setFormData] = useState({
+      task: '',
+      time: '',
+      deadline: ''
+    })
+
+    const handleSubmit = (e) => {
+      e.preventDefault()
+      if (formData.task && formData.time && formData.deadline) {
+        addNewTask(formData)
+      }
+    }
+
+    if (!showNewTaskModal) return null
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">Nova Tarefa</h3>
+            <button 
+              onClick={() => setShowNewTaskModal(false)}
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Descrição da Tarefa *</label>
+              <input
+                type="text"
+                value={formData.task}
+                onChange={(e) => setFormData({...formData, task: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                placeholder="Ex: Criar post para Instagram"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Horário *</label>
+              <input
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({...formData, time: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Prazo *</label>
+              <input
+                type="date"
+                value={formData.deadline}
+                onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:bg-white transition-all"
+                required
+              />
+            </div>
+
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                className="flex-1 bg-black text-white py-4 rounded-2xl font-semibold hover:bg-gray-800 transition-colors"
+              >
+                Adicionar Tarefa
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNewTaskModal(false)}
+                className="flex-1 border border-gray-200 text-gray-600 py-4 rounded-2xl font-semibold hover:border-gray-400 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
   }
 
   // Modal de cadastro de novo cliente
@@ -921,7 +1051,15 @@ export default function SocialNinja() {
 
           {/* Login Social */}
           <div className="space-y-3">
-            <button className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-2xl font-medium hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-3">
+            <button 
+              onClick={() => {
+                // Simular login com Google
+                setIsLoggedIn(true)
+                setIsNewUser(false)
+                setShowOnboarding(false)
+              }}
+              className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-2xl font-medium hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-3"
+            >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -1756,9 +1894,12 @@ export default function SocialNinja() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <button className="text-gray-300 hover:text-gray-600 transition-colors">
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
+          <div className="relative">
+            <button className="text-gray-300 hover:text-gray-600 transition-colors">
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+            {/* Menu dropdown seria implementado aqui */}
+          </div>
           <div className="w-6 h-6 rounded-full overflow-hidden">
             <img 
               src={profileData.avatar} 
@@ -1869,12 +2010,12 @@ export default function SocialNinja() {
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
           </svg>
         </button>
-        <button 
-          onClick={() => setShowFinancial(true)}
-          className="px-4 py-3 border border-gray-200 rounded-2xl text-gray-600 hover:border-black hover:text-black transition-all duration-300"
-        >
-          Relatório
-        </button>
+        <div className="relative">
+          <button className="px-4 py-3 border border-gray-200 rounded-2xl text-gray-600 hover:border-black hover:text-black transition-all duration-300 flex items-center space-x-2">
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          {/* Menu dropdown com opções de arquivar, deletar, exportar */}
+        </div>
       </div>
     </div>
   )
@@ -2864,31 +3005,67 @@ export default function SocialNinja() {
       case 'tasks':
         return (
           <div className="space-y-8">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Tarefas</h1>
-              <p className="text-gray-500">Sua agenda diária</p>
+            <div className="flex items-center justify-between">
+              <div className="text-center flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Tarefas</h1>
+                <p className="text-gray-500">Sua agenda diária</p>
+              </div>
+              <button 
+                onClick={() => setShowNewTaskModal(true)}
+                className="bg-black text-white px-6 py-3 rounded-2xl font-medium hover:bg-gray-800 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Nova Tarefa</span>
+              </button>
             </div>
+
+            {/* Notificação de tarefas atrasadas */}
+            {getOverdueTasks().length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  <div>
+                    <h3 className="font-medium text-red-800">Tarefas Atrasadas</h3>
+                    <p className="text-sm text-red-600">
+                      Você tem {getOverdueTasks().length} tarefa(s) atrasada(s)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Lista de tarefas minimalista */}
             <div className="space-y-4">
-              {[
-                { task: "Postar story Café Aroma", time: "09:00", done: true },
-                { task: "Responder comentários Boutique", time: "10:30", done: false },
-                { task: "Criar post Tech Solutions", time: "14:00", done: false },
-                { task: "Reunião cliente novo", time: "16:00", done: false }
-              ].map((item, index) => (
-                <div key={index} className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center space-x-4 ${item.done ? 'opacity-60' : ''}`}>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${item.done ? 'bg-black border-black' : 'border-gray-300'}`}>
-                    {item.done && <Check className="w-4 h-4 text-white" />}
+              {tasks.map((item, index) => {
+                const isOverdue = !item.done && item.deadline < new Date().toISOString().split('T')[0]
+                
+                return (
+                  <div key={index} className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center space-x-4 ${item.done ? 'opacity-60' : ''} ${isOverdue ? 'border-red-200 bg-red-50' : ''}`}>
+                    <button
+                      onClick={() => {
+                        setTasks(prev => prev.map(task => 
+                          task.id === item.id ? { ...task, done: !task.done } : task
+                        ))
+                      }}
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${item.done ? 'bg-black border-black' : 'border-gray-300'}`}
+                    >
+                      {item.done && <Check className="w-4 h-4 text-white" />}
+                    </button>
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${item.done ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                        {item.task}
+                      </h4>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>{item.time}</span>
+                        <span>Prazo: {new Date(item.deadline).toLocaleDateString('pt-BR')}</span>
+                        {isOverdue && (
+                          <span className="text-red-600 font-medium">ATRASADA</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className={`font-medium ${item.done ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                      {item.task}
-                    </h4>
-                    <p className="text-sm text-gray-500">{item.time}</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )
@@ -2897,8 +3074,8 @@ export default function SocialNinja() {
         return (
           <div className="space-y-8">
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Minha Assinatura</h1>
-              <p className="text-gray-500">Gerencie seu plano e indicações</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Configurações</h1>
+              <p className="text-gray-500">Gerencie seu perfil, equipe e configurações</p>
             </div>
 
             {/* Header de Assinatura - MELHORADO PARA MOBILE */}
@@ -2945,6 +3122,54 @@ export default function SocialNinja() {
                   <div className="text-xs text-gray-300">Suporte</div>
                 </div>
               </div>
+            </div>
+
+            {/* Botões de Ação Rápida */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button 
+                onClick={() => setShowProfile(true)}
+                className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 text-left"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Meu Perfil</h4>
+                    <p className="text-sm text-gray-500">Editar informações</p>
+                  </div>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => setShowFinancial(true)}
+                className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 text-left"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Financeiro</h4>
+                    <p className="text-sm text-gray-500">Controle de receitas</p>
+                  </div>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => setShowTeamManagement(true)}
+                className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 text-left"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center">
+                    <Users className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Equipe</h4>
+                    <p className="text-sm text-gray-500">Gerenciar membros</p>
+                  </div>
+                </div>
+              </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -3036,54 +3261,6 @@ export default function SocialNinja() {
                 </button>
               </div>
             </div>
-
-            {/* Botões de Ação Rápida */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button 
-                onClick={() => setShowProfile(true)}
-                className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 text-left"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
-                    <User className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Meu Perfil</h4>
-                    <p className="text-sm text-gray-500">Editar informações</p>
-                  </div>
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setShowFinancial(true)}
-                className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 text-left"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Financeiro</h4>
-                    <p className="text-sm text-gray-500">Controle de receitas</p>
-                  </div>
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setShowTeamManagement(true)}
-                className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 text-left"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center">
-                    <Users className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Equipe</h4>
-                    <p className="text-sm text-gray-500">Gerenciar membros</p>
-                  </div>
-                </div>
-              </button>
-            </div>
           </div>
         )
 
@@ -3095,14 +3272,7 @@ export default function SocialNinja() {
               <p className="text-gray-500">Apresentações estilo Apple Keynote</p>
             </div>
 
-            {/* Slides de Relatório */}
-            <div className="space-y-8">
-              {editableData.map(client => (
-                <ReportSlide key={client.id} client={client} />
-              ))}
-            </div>
-
-            {/* KPIs Gerais */}
+            {/* KPIs Gerais - MOVIDO PARA CIMA */}
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
               <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Visão Geral - Todos os Clientes</h3>
               
@@ -3139,6 +3309,13 @@ export default function SocialNinja() {
                   <div className="text-sm text-gray-500">Metas Atingidas</div>
                 </div>
               </div>
+            </div>
+
+            {/* Slides de Relatório */}
+            <div className="space-y-8">
+              {editableData.map(client => (
+                <ReportSlide key={client.id} client={client} />
+              ))}
             </div>
           </div>
         )
@@ -3335,8 +3512,8 @@ export default function SocialNinja() {
             />
             <TabButton
               id="subscription"
-              icon={Crown}
-              label="Assinatura"
+              icon={Settings}
+              label="Configurações"
               isActive={activeTab === 'subscription'}
               onClick={() => setActiveTab('subscription')}
             />
@@ -3358,8 +3535,9 @@ export default function SocialNinja() {
         </div>
       )}
 
-      {/* Modal de Novo Cliente */}
+      {/* Modais */}
       <NewClientModal />
+      <NewTaskModal />
     </div>
   )
 }
