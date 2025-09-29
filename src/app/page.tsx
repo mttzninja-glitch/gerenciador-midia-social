@@ -26,6 +26,16 @@ const mockClients = [
     statusColor: "text-green-600",
     statusBg: "bg-green-50",
     metrics: { followers: "12.5K", engagement: "4.2%", reach: "45.2K" },
+    monthlyData: {
+      posts: 24,
+      stories: 18,
+      likes: 1250,
+      shares: 89,
+      comments: 156,
+      followers: 320,
+      saves: 78,
+      views: 4500
+    },
     info: {
       email: "contato@cafearoma.com",
       phone: "(11) 99999-9999",
@@ -50,6 +60,16 @@ const mockClients = [
     statusColor: "text-amber-600",
     statusBg: "bg-amber-50",
     metrics: { followers: "8.3K", engagement: "6.1%", reach: "28.7K" },
+    monthlyData: {
+      posts: 20,
+      stories: 25,
+      likes: 980,
+      shares: 45,
+      comments: 89,
+      followers: 180,
+      saves: 92,
+      views: 3200
+    },
     info: {
       email: "contato@boutiqueelegance.com",
       phone: "(11) 88888-8888",
@@ -74,6 +94,16 @@ const mockClients = [
     statusColor: "text-green-600",
     statusBg: "bg-green-50",
     metrics: { followers: "25.1K", engagement: "3.8%", reach: "89.4K" },
+    monthlyData: {
+      posts: 18,
+      stories: 12,
+      likes: 2100,
+      shares: 156,
+      comments: 234,
+      followers: 450,
+      saves: 123,
+      views: 8900
+    },
     info: {
       email: "contato@techsolutions.com",
       phone: "(11) 77777-7777",
@@ -263,6 +293,7 @@ export default function SocialNinja() {
   const [showTeamManagement, setShowTeamManagement] = useState(false)
   const [showNewClientModal, setShowNewClientModal] = useState(false)
   const [showNewTaskModal, setShowNewTaskModal] = useState(false)
+  const [selectedReportTab, setSelectedReportTab] = useState('overview')
   const [profileData, setProfileData] = useState({
     name: "João Silva",
     email: "joao@socialninja.com",
@@ -470,6 +501,16 @@ export default function SocialNinja() {
       statusColor: "text-blue-600",
       statusBg: "bg-blue-50",
       metrics: { followers: "0", engagement: "0%", reach: "0" },
+      monthlyData: {
+        posts: 0,
+        stories: 0,
+        likes: 0,
+        shares: 0,
+        comments: 0,
+        followers: 0,
+        saves: 0,
+        views: 0
+      },
       info: {
         email: clientData.email,
         phone: clientData.phone,
@@ -1053,10 +1094,11 @@ export default function SocialNinja() {
           <div className="space-y-3">
             <button 
               onClick={() => {
-                // Simular login com Google
+                // Simular login com Google - redirecionar para dashboard
                 setIsLoggedIn(true)
                 setIsNewUser(false)
                 setShowOnboarding(false)
+                setActiveTab('dashboard')
               }}
               className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-2xl font-medium hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-3"
             >
@@ -1879,8 +1921,7 @@ export default function SocialNinja() {
             <div className="flex items-center space-x-3 mb-1">
               <button 
                 onClick={() => {
-                  setSelectedClient(client)
-                  setShowClientPlanning(true)
+                  window.location.href = `/cliente/${client.id}`
                 }}
                 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
               >
@@ -1895,10 +1936,46 @@ export default function SocialNinja() {
         </div>
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <button className="text-gray-300 hover:text-gray-600 transition-colors">
+            <button 
+              onClick={(e) => {
+                const options = [
+                  { label: 'Arquivar Cliente', action: () => archiveClient(client.id) },
+                  { label: 'Exportar Dados', action: () => console.log('Exportar dados do cliente') },
+                  { label: 'Deletar Cliente', action: () => deleteClient(client.id), danger: true }
+                ]
+                
+                const menu = document.createElement('div')
+                menu.className = 'absolute right-0 top-8 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-2 min-w-48'
+                
+                options.forEach(option => {
+                  const item = document.createElement('button')
+                  item.className = `w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${option.danger ? 'text-red-600' : 'text-gray-700'}`
+                  item.textContent = option.label
+                  item.onclick = () => {
+                    option.action()
+                    menu.remove()
+                  }
+                  menu.appendChild(item)
+                })
+                
+                // Remover menu ao clicar fora
+                const removeMenu = (event) => {
+                  if (!menu.contains(event.target)) {
+                    menu.remove()
+                    document.removeEventListener('click', removeMenu)
+                  }
+                }
+                
+                setTimeout(() => document.addEventListener('click', removeMenu), 0)
+                
+                // Adicionar menu ao DOM
+                const button = e.currentTarget
+                button.parentNode.appendChild(menu)
+              }}
+              className="text-gray-300 hover:text-gray-600 transition-colors"
+            >
               <MoreHorizontal className="w-5 h-5" />
             </button>
-            {/* Menu dropdown seria implementado aqui */}
           </div>
           <div className="w-6 h-6 rounded-full overflow-hidden">
             <img 
@@ -2010,12 +2087,6 @@ export default function SocialNinja() {
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
           </svg>
         </button>
-        <div className="relative">
-          <button className="px-4 py-3 border border-gray-200 rounded-2xl text-gray-600 hover:border-black hover:text-black transition-all duration-300 flex items-center space-x-2">
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
-          {/* Menu dropdown com opções de arquivar, deletar, exportar */}
-        </div>
       </div>
     </div>
   )
@@ -2773,6 +2844,99 @@ export default function SocialNinja() {
     </div>
   )
 
+  // Componente de Dados Mensais do Cliente
+  const MonthlyDataCard = ({ client }) => (
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+        <BarChart3 className="w-5 h-5 mr-2" />
+        Dados Mensais - {client.name}
+      </h3>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Posts */}
+        <div className="text-center p-4 bg-blue-50 rounded-2xl">
+          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <FileText className="w-4 h-4 text-blue-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{client.monthlyData.posts}</div>
+          <div className="text-xs text-gray-500">Posts</div>
+        </div>
+
+        {/* Stories */}
+        <div className="text-center p-4 bg-purple-50 rounded-2xl">
+          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <Circle className="w-4 h-4 text-purple-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{client.monthlyData.stories}</div>
+          <div className="text-xs text-gray-500">Stories</div>
+        </div>
+
+        {/* Curtidas */}
+        <div className="text-center p-4 bg-red-50 rounded-2xl">
+          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <Heart className="w-4 h-4 text-red-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{client.monthlyData.likes}</div>
+          <div className="text-xs text-gray-500">Curtidas</div>
+        </div>
+
+        {/* Compartilhamentos */}
+        <div className="text-center p-4 bg-green-50 rounded-2xl">
+          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <Share className="w-4 h-4 text-green-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{client.monthlyData.shares}</div>
+          <div className="text-xs text-gray-500">Compartilhamentos</div>
+        </div>
+
+        {/* Comentários */}
+        <div className="text-center p-4 bg-yellow-50 rounded-2xl">
+          <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <MessageCircle className="w-4 h-4 text-yellow-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{client.monthlyData.comments}</div>
+          <div className="text-xs text-gray-500">Comentários</div>
+        </div>
+
+        {/* Seguidores */}
+        <div className="text-center p-4 bg-indigo-50 rounded-2xl">
+          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <Users className="w-4 h-4 text-indigo-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">+{client.monthlyData.followers}</div>
+          <div className="text-xs text-gray-500">Novos Seguidores</div>
+        </div>
+
+        {/* Salvamentos */}
+        <div className="text-center p-4 bg-pink-50 rounded-2xl">
+          <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <Bookmark className="w-4 h-4 text-pink-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{client.monthlyData.saves}</div>
+          <div className="text-xs text-gray-500">Salvamentos</div>
+        </div>
+
+        {/* Visualizações */}
+        <div className="text-center p-4 bg-teal-50 rounded-2xl">
+          <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <Eye className="w-4 h-4 text-teal-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">{client.monthlyData.views}</div>
+          <div className="text-xs text-gray-500">Visualizações</div>
+        </div>
+      </div>
+
+      <div className="mt-6 flex space-x-3">
+        <button className="flex-1 bg-black text-white py-3 rounded-2xl font-medium hover:bg-gray-800 transition-colors">
+          Exportar Dados
+        </button>
+        <button className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-2xl font-medium hover:border-gray-400 transition-colors">
+          Editar Dados
+        </button>
+      </div>
+    </div>
+  )
+
   const renderContent = () => {
     if (showProfile) {
       return <ProfileView />
@@ -3272,51 +3436,86 @@ export default function SocialNinja() {
               <p className="text-gray-500">Apresentações estilo Apple Keynote</p>
             </div>
 
-            {/* KPIs Gerais - MOVIDO PARA CIMA */}
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Visão Geral - Todos os Clientes</h3>
-              
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <TrendingUp className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">+28%</div>
-                  <div className="text-sm text-gray-500">Crescimento Médio</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <BarChart3 className="w-8 h-8 text-green-600" />
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">5.2%</div>
-                  <div className="text-sm text-gray-500">Engajamento Médio</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <PieChart className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">892</div>
-                  <div className="text-sm text-gray-500">Total de Leads</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Target className="w-8 h-8 text-orange-600" />
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">94%</div>
-                  <div className="text-sm text-gray-500">Metas Atingidas</div>
-                </div>
-              </div>
+            {/* Abas de Relatório */}
+            <div className="flex space-x-1 bg-gray-100 rounded-2xl p-1 max-w-md mx-auto">
+              <button
+                onClick={() => setSelectedReportTab('overview')}
+                className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+                  selectedReportTab === 'overview' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Visão Geral
+              </button>
+              <button
+                onClick={() => setSelectedReportTab('monthly')}
+                className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+                  selectedReportTab === 'monthly' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Dados Mensais
+              </button>
             </div>
 
-            {/* Slides de Relatório */}
-            <div className="space-y-8">
-              {editableData.map(client => (
-                <ReportSlide key={client.id} client={client} />
-              ))}
-            </div>
+            {selectedReportTab === 'overview' ? (
+              <>
+                {/* KPIs Gerais - MOVIDO PARA CIMA */}
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Visão Geral - Todos os Clientes</h3>
+                  
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <TrendingUp className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 mb-1">+28%</div>
+                      <div className="text-sm text-gray-500">Crescimento Médio</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <BarChart3 className="w-8 h-8 text-green-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 mb-1">5.2%</div>
+                      <div className="text-sm text-gray-500">Engajamento Médio</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <PieChart className="w-8 h-8 text-purple-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 mb-1">892</div>
+                      <div className="text-sm text-gray-500">Total de Leads</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Target className="w-8 h-8 text-orange-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 mb-1">94%</div>
+                      <div className="text-sm text-gray-500">Metas Atingidas</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Slides de Relatório */}
+                <div className="space-y-8">
+                  {editableData.map(client => (
+                    <ReportSlide key={client.id} client={client} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              /* Aba de Dados Mensais */
+              <div className="space-y-8">
+                {editableData.map(client => (
+                  <MonthlyDataCard key={client.id} client={client} />
+                ))}
+              </div>
+            )}
           </div>
         )
 
@@ -3450,22 +3649,6 @@ export default function SocialNinja() {
           <span className="text-gray-500 ml-2 truncate text-xs sm:text-sm">{currentDate || 'Carregando...'}</span>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-          <button 
-            onClick={() => setShowClientArea(!showClientArea)}
-            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
-              showClientArea ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {showClientArea ? 'Admin' : 'Cliente'}
-          </button>
-          <button 
-            onClick={() => setShowAdminArea(!showAdminArea)}
-            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
-              showAdminArea ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-            }`}
-          >
-            Admin
-          </button>
           <button 
             onClick={() => setIsLoggedIn(false)}
             className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600 hover:bg-red-200 transition-colors whitespace-nowrap"
